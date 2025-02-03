@@ -36,12 +36,20 @@ namespace Orleans.Providers.MongoDB.Membership.Store.Multiple
         {
             var byDeploymentIdDefinition = Index.Ascending(x => x.DeploymentId);
 
-            collection.Indexes.CreateOne(
-                new CreateIndexModel<MongoMembershipDocument>(byDeploymentIdDefinition,
-                    new CreateIndexOptions
-                    {
-                        Name = "ByDeploymentId"
-                    }));
+            try
+            {
+                collection.Indexes.CreateOne(
+                    new CreateIndexModel<MongoMembershipDocument>(byDeploymentIdDefinition,
+                        new CreateIndexOptions
+                        {
+                            Name = "ByDeploymentId"
+                        }));
+            }
+            // 68 = IndexAlreadyExists
+            catch (MongoCommandException mce) when (mce.Code == 68)
+            {
+                // do not care
+            }
         }
 
         public async Task<bool> UpsertRow(string deploymentId, MembershipEntry entry, string etag, TableVersion tableVersion)
